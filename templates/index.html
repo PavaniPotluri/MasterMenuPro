@@ -1,0 +1,261 @@
+{% extends "layout.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Personalized Meal Planning</h1>
+        <p class="hero-subtitle">
+            Generate nutritionally balanced meal plans based on USDA dietary guidelines,
+            tailored to your preferences and dietary needs.
+        </p>
+        <a href="#meal-preferences" class="btn btn-light btn-lg">
+            <i class="fas fa-utensils me-2"></i>Create Your Meal Plan
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card summary-card h-100">
+                <div class="card-body text-center">
+                    <div class="summary-icon text-primary">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h5 class="card-title">Balanced Nutrition</h5>
+                    <p class="card-text">
+                        Meal plans follow USDA guidelines for macronutrients, micronutrients, and portion sizes.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card summary-card h-100">
+                <div class="card-body text-center">
+                    <div class="summary-icon text-primary">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h5 class="card-title">Customizable</h5>
+                    <p class="card-text">
+                        Adjust for dietary restrictions, allergies, and preferences to create your perfect meal plan.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card summary-card h-100">
+                <div class="card-body text-center">
+                    <div class="summary-icon text-primary">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h5 class="card-title">Detailed Analytics</h5>
+                    <p class="card-text">
+                        View nutritional breakdowns and visualizations of your meal plan's macronutrient content.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card mb-5" id="meal-preferences">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Meal Plan Preferences</h4>
+                </div>
+                <div class="card-body">
+                    <form id="meal-plan-form" action="{{ url_for('generate_plan') }}" method="post" class="preferences-form">
+                        <!-- Calorie Target Section -->
+                        <div class="preferences-section">
+                            <h5 class="mb-3">Calorie Target</h5>
+                            <div class="form-group mb-3">
+                                <label for="calorie-target" class="form-label">Daily calorie target:</label>
+                                <input type="number" class="form-control" id="calorie-target" name="calorie_target" 
+                                       value="2000" min="1200" max="4000" step="100" required
+                                       oninput="updateCalorieBreakdown()">
+                                <div class="form-text">
+                                    Recommended for an average adult. Adjust based on your activity level and goals.
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-light text-dark mt-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Daily Calorie Breakdown</h6>
+                                    <div class="row">
+                                        <div class="col-md-3 col-6 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-4 fw-bold" id="breakfast-calories">500</span>
+                                                <small class="text-muted">Breakfast</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-4 fw-bold" id="lunch-calories">600</span>
+                                                <small class="text-muted">Lunch</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-4 fw-bold" id="dinner-calories">700</span>
+                                                <small class="text-muted">Dinner</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-6 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-4 fw-bold" id="snack-calories">200</span>
+                                                <small class="text-muted">Snacks</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6 class="card-title">Macronutrient Targets</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 col-4 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-5 fw-bold" id="protein-target">113</span>
+                                                <small class="text-muted">Protein (g)</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-4 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-5 fw-bold" id="carbs-target">275</span>
+                                                <small class="text-muted">Carbs (g)</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 col-4 mb-2">
+                                            <div class="text-center">
+                                                <span class="d-block fs-5 fw-bold" id="fat-target">61</span>
+                                                <small class="text-muted">Fat (g)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Diet Type Section -->
+                        <div class="preferences-section">
+                            <h5 class="mb-3">Diet Type</h5>
+                            <div class="diet-type-selector">
+                                <label class="diet-type-card" for="diet-balanced">
+                                    <input type="radio" id="diet-balanced" name="diet_type" value="balanced" checked>
+                                    <div class="diet-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="diet-name">Balanced</div>
+                                    <div class="diet-description">USDA-recommended balance of macronutrients</div>
+                                </label>
+                                
+                                <label class="diet-type-card" for="diet-low-carb">
+                                    <input type="radio" id="diet-low-carb" name="diet_type" value="low-carb">
+                                    <div class="diet-icon"><i class="fas fa-bread-slice"></i></div>
+                                    <div class="diet-name">Low Carb</div>
+                                    <div class="diet-description">Reduced carbohydrates, higher protein and fats</div>
+                                </label>
+                                
+                                <label class="diet-type-card" for="diet-high-protein">
+                                    <input type="radio" id="diet-high-protein" name="diet_type" value="high-protein">
+                                    <div class="diet-icon"><i class="fas fa-drumstick-bite"></i></div>
+                                    <div class="diet-name">High Protein</div>
+                                    <div class="diet-description">Extra protein for muscle building and satiety</div>
+                                </label>
+                                
+                                <label class="diet-type-card" for="diet-low-fat">
+                                    <input type="radio" id="diet-low-fat" name="diet_type" value="low-fat">
+                                    <div class="diet-icon"><i class="fas fa-oil-can"></i></div>
+                                    <div class="diet-name">Low Fat</div>
+                                    <div class="diet-description">Reduced fat, higher in complex carbohydrates</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Dietary Restrictions Section -->
+                        <div class="preferences-section">
+                            <h5 class="mb-3">Dietary Restrictions</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="vegetarian" name="vegetarian">
+                                        <label class="form-check-label" for="vegetarian">
+                                            Vegetarian
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="vegan" name="vegan">
+                                        <label class="form-check-label" for="vegan">
+                                            Vegan
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="gluten-free" name="gluten_free">
+                                        <label class="form-check-label" for="gluten-free">
+                                            Gluten-Free
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="dairy-free" name="dairy_free">
+                                        <label class="form-check-label" for="dairy-free">
+                                            Dairy-Free
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="allergens" class="form-label">Allergens to avoid (comma-separated):</label>
+                                <input type="text" class="form-control" id="allergens" name="allergens" 
+                                       placeholder="e.g. peanuts, shellfish, soy">
+                                <div class="form-text">
+                                    Common allergens: peanuts, tree nuts, dairy, eggs, wheat, soy, fish, shellfish
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-utensils me-2"></i>Generate Meal Plan
+                            </button>
+                            <div id="loading-spinner" class="spinner-border text-primary mt-3 d-none" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize calorie breakdown
+        updateCalorieBreakdown();
+        
+        // Set up diet type card selection
+        const dietCards = document.querySelectorAll('.diet-type-card');
+        dietCards.forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            
+            // Initial state
+            if (radio.checked) {
+                card.classList.add('selected');
+            }
+            
+            // Handle clicks
+            card.addEventListener('click', function() {
+                // Unselect all cards
+                dietCards.forEach(c => c.classList.remove('selected'));
+                
+                // Select the clicked card and check its radio button
+                card.classList.add('selected');
+                radio.checked = true;
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDA Meal Planner - {% block title %}Home{% endblock %}</title>
+    
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-utensils me-2"></i>
+                USDA Meal Planner
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                            <i class="fas fa-info-circle me-1"></i> About USDA Guidelines
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main content -->
+    <main class="py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4 bg-dark">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>USDA Meal Planner</h5>
+                    <p class="text-muted">
+                        A tool to create nutritionally balanced meal plans based on USDA dietary guidelines.
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+                        <li><a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#aboutModal">About Guidelines</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.dietaryguidelines.gov/" target="_blank" class="text-decoration-none">Dietary Guidelines</a></li>
+                        <li><a href="https://www.myplate.gov/" target="_blank" class="text-decoration-none">MyPlate</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 USDA Meal Planner - Based on <a href="https://www.dietaryguidelines.gov/" target="_blank" class="text-decoration-none">USDA Dietary Guidelines</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- About USDA Guidelines Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aboutModalLabel">About USDA Dietary Guidelines</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>What are the USDA Dietary Guidelines?</h4>
+                    <p>
+                        The Dietary Guidelines for Americans provide science-based advice on what to eat and drink to promote health, help prevent chronic disease, and meet nutrient needs.
+                    </p>
+                    
+                    <h4>Key Recommendations</h4>
+                    <ul>
+                        <li>Follow a healthy dietary pattern at every life stage.</li>
+                        <li>Customize nutrient-dense food and beverage choices to reflect personal preferences, cultural traditions, and budgetary considerations.</li>
+                        <li>Focus on meeting food group needs with nutrient-dense foods and beverages, and stay within calorie limits.</li>
+                        <li>Limit foods and beverages higher in added sugars, saturated fat, and sodium, and limit alcoholic beverages.</li>
+                    </ul>
+                    
+                    <h4>Macronutrient Distribution</h4>
+                    <p>The USDA recommends the following macronutrient distribution ranges:</p>
+                    <ul>
+                        <li><strong>Protein:</strong> 10-35% of total calories</li>
+                        <li><strong>Carbohydrates:</strong> 45-65% of total calories</li>
+                        <li><strong>Fat:</strong> 20-35% of total calories</li>
+                    </ul>
+                    
+                    <h4>Daily Fiber Recommendation</h4>
+                    <p>The recommended daily fiber intake is approximately 14 grams per 1,000 calories consumed.</p>
+                    
+                    <h4>Food Group Recommendations</h4>
+                    <p>Based on a 2,000-calorie diet, the USDA recommends:</p>
+                    <ul>
+                        <li><strong>Fruits:</strong> 2 cups per day</li>
+                        <li><strong>Vegetables:</strong> 2.5 cups per day</li>
+                        <li><strong>Grains:</strong> 6 ounce-equivalents per day (with at least half being whole grains)</li>
+                        <li><strong>Dairy:</strong> 3 cups per day</li>
+                        <li><strong>Protein foods:</strong> 5.5 ounce-equivalents per day</li>
+                        <li><strong>Oils:</strong> 27 grams per day</li>
+                    </ul>
+                    
+                    <p class="text-center mt-4">
+                        <a href="https://www.dietaryguidelines.gov/" target="_blank" class="btn btn-primary">Visit Official USDA Guidelines Website</a>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js utilities -->
+    <script src="{{ url_for('static', filename='js/chart_utils.js') }}"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/meal_planner.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

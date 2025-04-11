@@ -1,0 +1,255 @@
+/* Custom styles for Meal Planner */
+
+.recipe-card {
+  transition: transform 0.2s;
+  margin-bottom: 1.5rem;
+  height: 100%;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-image {
+  height: 180px;
+  object-fit: cover;
+  border-top-left-radius: calc(0.375rem - 1px);
+  border-top-right-radius: calc(0.375rem - 1px);
+}
+
+.recipe-details {
+  font-size: 0.9rem;
+}
+
+.nutrition-label {
+  font-size: 0.85rem;
+  border: 1px solid var(--bs-gray-300);
+  padding: 0.75rem;
+  background-color: var(--bs-gray-100);
+}
+
+.nutrition-label dl {
+  margin-bottom: 0;
+}
+
+.nutrition-label dt {
+  float: left;
+  clear: left;
+  width: 65%;
+}
+
+.nutrition-label dd {
+  text-align: right;
+}
+
+.nutrition-chart-container {
+  height: 300px;
+  margin-bottom: 1.5rem;
+}
+
+.calorie-chart-container {
+  height: 250px;
+  margin-bottom: 1.5rem;
+}
+
+.weekly-chart-container {
+  height: 400px;
+  margin-bottom: 1.5rem;
+}
+
+.macro-pill {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.25rem;
+  border-radius: 10px;
+}
+
+.macro-protein {
+  background-color: rgba(255, 99, 132, 0.2);
+  color: rgba(255, 99, 132, 1);
+}
+
+.macro-carbs {
+  background-color: rgba(54, 162, 235, 0.2);
+  color: rgba(54, 162, 235, 1);
+}
+
+.macro-fat {
+  background-color: rgba(255, 206, 86, 0.2);
+  color: rgba(255, 206, 86, 1);
+}
+
+.meal-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--bs-gray-300);
+}
+
+.meal-section:last-child {
+  border-bottom: none;
+}
+
+.day-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background-color: var(--bs-body-bg);
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--bs-gray-300);
+  margin-bottom: 1.5rem;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .recipe-card {
+    break-inside: avoid;
+  }
+  
+  .page-break {
+    page-break-after: always;
+  }
+}
+
+/* Animation for loading spinner */
+.spinner-grow {
+  animation-duration: 1s;
+}
+
+/* Preferences form styling */
+.preferences-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.preferences-section {
+  margin-bottom: 2rem;
+}
+
+/* Recipe details styling */
+.recipe-instructions {
+  counter-reset: step-counter;
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.recipe-instructions li {
+  counter-increment: step-counter;
+  margin-bottom: 1rem;
+  padding-left: 2.5rem;
+  position: relative;
+}
+
+.recipe-instructions li::before {
+  content: counter(step-counter);
+  background-color: var(--bs-primary);
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  border-radius: 50%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dashboard summary styling */
+.summary-card {
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Hero section styling */
+.hero-section {
+  padding: 4rem 0;
+  text-align: center;
+  background-color: var(--bs-primary);
+  background-image: linear-gradient(45deg, var(--bs-primary), var(--bs-primary-dark, #0056b3));
+  color: white;
+  margin-bottom: 3rem;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-bottom: 2rem;
+}
+
+/* Custom styling for diet type selection */
+.diet-type-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.diet-type-card {
+  flex: 1 0 200px;
+  position: relative;
+  cursor: pointer;
+  text-align: center;
+  padding: 1.5rem;
+  border: 2px solid var(--bs-gray-300);
+  border-radius: 0.5rem;
+  transition: all 0.3s;
+}
+
+.diet-type-card:hover {
+  border-color: var(--bs-primary);
+  background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.diet-type-card.selected {
+  border-color: var(--bs-primary);
+  background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.diet-type-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.diet-type-card .diet-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.diet-type-card .diet-name {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.diet-type-card .diet-description {
+  font-size: 0.85rem;
+  color: var(--bs-gray-600);
+}

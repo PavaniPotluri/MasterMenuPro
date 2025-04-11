@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ recipe.title }} - Recipe Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Recipe Details</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="row g-0">
+            <div class="col-md-5">
+                {% if recipe.image %}
+                    <img src="{{ recipe.image }}" class="img-fluid rounded-start" alt="{{ recipe.title }}" style="height: 100%; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                        <i class="fas fa-image fa-5x text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-7">
+                <div class="card-body">
+                    <h1 class="card-title">{{ recipe.title }}</h1>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="me-4">
+                            <i class="far fa-clock me-1"></i> {{ recipe.readyInMinutes }} minutes
+                        </div>
+                        <div>
+                            <i class="fas fa-users me-1"></i> {{ recipe.servings }} servings
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Nutrition Information <small class="text-muted">(per serving)</small></h5>
+                        <div class="nutrition-label">
+                            <dl>
+                                <dt>Calories</dt>
+                                <dd>{{ recipe.nutrition.calories|round|int }} kcal</dd>
+                                
+                                <dt>Protein</dt>
+                                <dd>{{ recipe.nutrition.protein|round|int }} g</dd>
+                                
+                                <dt>Carbohydrates</dt>
+                                <dd>{{ recipe.nutrition.carbs|round|int }} g</dd>
+                                
+                                <dt>Fat</dt>
+                                <dd>{{ recipe.nutrition.fat|round|int }} g</dd>
+                                
+                                <dt>Fiber</dt>
+                                <dd>{{ recipe.nutrition.fiber|round|int }} g</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ recipe.sourceUrl }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt me-1"></i> View Original Recipe
+                    </a>
+                    
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Print Recipe
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Ingredients</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% if recipe.ingredients %}
+                            {% for ingredient in recipe.ingredients %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>{{ ingredient.name }}</span>
+                                        <span>{{ ingredient.amount }} {{ ingredient.unit }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="list-group-item">
+                                <p class="mb-0">Ingredients list not available. Please check the original recipe.</p>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-utensils me-2"></i>Instructions</h5>
+                </div>
+                <div class="card-body">
+                    {% if recipe.instructions %}
+                        <ol class="recipe-instructions">
+                            {% for instruction in recipe.instructions %}
+                                <li>{{ instruction }}</li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p>Instructions not available. Please check the original recipe.</p>
+                        <a href="{{ recipe.sourceUrl }}" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i> View Original Recipe
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4 mb-5">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Go Back to Meal Plan
+        </a>
+    </div>
+</div>
+{% endblock %}

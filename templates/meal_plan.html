@@ -1,0 +1,518 @@
+{% extends "layout.html" %}
+
+{% block title %}Meal Plan{% endblock %}
+
+{% block head %}
+<style>
+    @media print {
+        .tab-content > .tab-pane {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            page-break-after: always;
+        }
+        
+        .nav-tabs {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-calendar-alt me-2"></i>Weekly Meal Plan</h1>
+        <div class="no-print">
+            <button id="print-meal-plan" class="btn btn-outline-primary">
+                <i class="fas fa-print me-2"></i>Print Meal Plan
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-redo me-2"></i>Create New Plan
+            </a>
+        </div>
+    </div>
+    
+    <!-- Plan details -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Plan Details</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Calorie Target
+                            <span class="badge bg-primary rounded-pill">{{ preferences.calorie_target }} kcal</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Diet Type
+                            <span class="badge bg-info rounded-pill">{{ preferences.diet_type|capitalize }}</span>
+                        </li>
+                        <li class="list-group-item">
+                            <div>Dietary Restrictions:</div>
+                            <div class="mt-1">
+                                {% if preferences.vegetarian %}
+                                <span class="badge bg-success me-1">Vegetarian</span>
+                                {% endif %}
+                                
+                                {% if preferences.vegan %}
+                                <span class="badge bg-success me-1">Vegan</span>
+                                {% endif %}
+                                
+                                {% if preferences.gluten_free %}
+                                <span class="badge bg-success me-1">Gluten-Free</span>
+                                {% endif %}
+                                
+                                {% if preferences.dairy_free %}
+                                <span class="badge bg-success me-1">Dairy-Free</span>
+                                {% endif %}
+                                
+                                {% if preferences.allergens %}
+                                <span class="badge bg-warning me-1">Allergies: {{ preferences.allergens }}</span>
+                                {% endif %}
+                                
+                                {% if not (preferences.vegetarian or preferences.vegan or preferences.gluten_free or preferences.dairy_free or preferences.allergens) %}
+                                <span class="badge bg-secondary">None</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title">USDA Recommendations</h5>
+                    <div class="card bg-light text-dark">
+                        <div class="card-body p-3">
+                            <div class="mb-2">
+                                <strong>Macronutrient Targets:</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Protein: {{ macro_targets.protein.grams }}g</span>
+                                <small>({{ macro_targets.protein.range[0] }}-{{ macro_targets.protein.range[1] }}g)</small>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Carbs: {{ macro_targets.carbs.grams }}g</span>
+                                <small>({{ macro_targets.carbs.range[0] }}-{{ macro_targets.carbs.range[1] }}g)</small>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Fat: {{ macro_targets.fat.grams }}g</span>
+                                <small>({{ macro_targets.fat.range[0] }}-{{ macro_targets.fat.range[1] }}g)</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Fiber: {{ macro_targets.fiber.grams }}g</span>
+                                <small>(minimum)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Summary Chart -->
+    <div class="card mb-4 no-print">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Weekly Nutrition Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="weekly-chart-container">
+                <canvas id="weekly-nutrition-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store nutrition data for charts -->
+    <script type="application/json" id="nutrition-data">
+        [
+        {% for day in days %}
+            {
+                "calories": {{ day.total_calories }},
+                "protein": {{ day.total_protein }},
+                "carbs": {{ day.total_carbs }},
+                "fat": {{ day.total_fat }},
+                "fiber": {{ day.total_fiber }}
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+        ]
+    </script>
+    <script type="application/json" id="target-data">
+        {{ macro_targets|tojson }}
+    </script>
+    
+    <!-- Day Navigation Tabs -->
+    <ul class="nav nav-tabs day-nav no-print" id="dayTabs" role="tablist">
+        {% for i in range(days|length) %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if i == 0 %}active{% endif %}" 
+                        id="day-{{ i }}-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#day-{{ i }}" 
+                        type="button" 
+                        role="tab" 
+                        aria-controls="day-{{ i }}" 
+                        aria-selected="{% if i == 0 %}true{% else %}false{% endif %}">
+                    {{ days_of_week[i] }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <!-- Day Tab Content -->
+    <div class="tab-content" id="dayTabsContent">
+        {% for i in range(days|length) %}
+            <div class="tab-pane fade {% if i == 0 %}show active{% endif %}" 
+                 id="day-{{ i }}" 
+                 role="tabpanel" 
+                 aria-labelledby="day-{{ i }}-tab">
+                
+                <!-- Day Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+                    <h2>{{ days_of_week[i] }}'s Meals</h2>
+                    <div class="no-print">
+                        <form id="regenerate-day-{{ i }}" action="{{ url_for('regenerate_day') }}" method="post" class="d-inline">
+                            <input type="hidden" name="plan_id" value="{{ meal_plan.id }}">
+                            <input type="hidden" name="day_index" value="{{ i }}">
+                            <button type="button" class="btn btn-outline-secondary" onclick="confirmRegenerate('regenerate-day-{{ i }}')">
+                                <i class="fas fa-random me-1"></i>Regenerate Day
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Nutrition Summary -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Daily Nutrition Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center mb-3">
+                                    <h2 class="mb-0">{{ days[i].total_calories|round|int }} <small class="text-muted">kcal</small></h2>
+                                    <p class="text-muted">Total Calories</p>
+                                    <div class="progress mb-2" style="height: 10px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                             style="width: {{ (days[i].total_calories / preferences.calorie_target * 100)|round|int }}%;" 
+                                             aria-valuenow="{{ days[i].total_calories|round|int }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="{{ preferences.calorie_target }}">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ ((days[i].total_calories / preferences.calorie_target) * 100)|round|int }}% of {{ preferences.calorie_target }} kcal target
+                                    </small>
+                                </div>
+                                
+                                <div class="nutrition-pills">
+                                    <div class="d-flex justify-content-center mb-2">
+                                        <span class="macro-pill macro-protein">
+                                            <i class="fas fa-drumstick-bite me-1"></i> Protein: {{ days[i].total_protein|round|int }}g
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-center mb-2">
+                                        <span class="macro-pill macro-carbs">
+                                            <i class="fas fa-bread-slice me-1"></i> Carbs: {{ days[i].total_carbs|round|int }}g
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-center mb-2">
+                                        <span class="macro-pill macro-fat">
+                                            <i class="fas fa-oil-can me-1"></i> Fat: {{ days[i].total_fat|round|int }}g
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-center">
+                                        <span class="macro-pill">
+                                            <i class="fas fa-seedling me-1"></i> Fiber: {{ days[i].total_fiber|round|int }}g
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="nutrition-chart-container">
+                                    <canvas id="nutrition-chart-{{ i }}"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="calorie-chart-container">
+                                    <canvas id="calorie-chart-{{ i }}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Breakfast -->
+                <div class="meal-section">
+                    <h3 class="mb-3"><i class="fas fa-sun me-2"></i>Breakfast</h3>
+                    {% if days[i].breakfast %}
+                        <div class="card mb-4">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    {% if days[i].breakfast.image %}
+                                        <img src="{{ days[i].breakfast.image }}" class="img-fluid recipe-image" alt="{{ days[i].breakfast.title }}">
+                                    {% else %}
+                                        <div class="recipe-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h4 class="card-title">{{ days[i].breakfast.title }}</h4>
+                                        <div class="d-flex mb-2">
+                                            <div class="me-3">
+                                                <i class="far fa-clock me-1"></i> {{ days[i].breakfast.readyInMinutes }} min
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-users me-1"></i> {{ days[i].breakfast.servings }} servings
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <span class="badge bg-info me-1">{{ days[i].breakfast.nutrition.calories|round|int }} kcal</span>
+                                            <span class="badge bg-primary me-1">{{ days[i].breakfast.nutrition.protein|round|int }}g protein</span>
+                                            <span class="badge bg-success me-1">{{ days[i].breakfast.nutrition.carbs|round|int }}g carbs</span>
+                                            <span class="badge bg-warning text-dark me-1">{{ days[i].breakfast.nutrition.fat|round|int }}g fat</span>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3 no-print">
+                                            <a href="{{ days[i].breakfast.sourceUrl }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i> View Full Recipe
+                                            </a>
+                                            <a href="{{ url_for('recipe_details', recipe_id=days[i].breakfast.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-info-circle me-1"></i> Details
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleRecipeDetails('breakfast-{{ i }}')">
+                                                <i class="fas fa-list me-1"></i> Ingredients
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="recipe-details-breakfast-{{ i }}" class="mt-3 d-none">
+                                            <h6>Ingredients:</h6>
+                                            <ul class="mb-0">
+                                                {% if days[i].breakfast.ingredients %}
+                                                    {% for ingredient in days[i].breakfast.ingredients %}
+                                                        <li>{{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <li>View the full recipe for ingredients</li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No breakfast recipe available.</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Lunch -->
+                <div class="meal-section">
+                    <h3 class="mb-3"><i class="fas fa-hamburger me-2"></i>Lunch</h3>
+                    {% if days[i].lunch %}
+                        <div class="card mb-4">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    {% if days[i].lunch.image %}
+                                        <img src="{{ days[i].lunch.image }}" class="img-fluid recipe-image" alt="{{ days[i].lunch.title }}">
+                                    {% else %}
+                                        <div class="recipe-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h4 class="card-title">{{ days[i].lunch.title }}</h4>
+                                        <div class="d-flex mb-2">
+                                            <div class="me-3">
+                                                <i class="far fa-clock me-1"></i> {{ days[i].lunch.readyInMinutes }} min
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-users me-1"></i> {{ days[i].lunch.servings }} servings
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <span class="badge bg-info me-1">{{ days[i].lunch.nutrition.calories|round|int }} kcal</span>
+                                            <span class="badge bg-primary me-1">{{ days[i].lunch.nutrition.protein|round|int }}g protein</span>
+                                            <span class="badge bg-success me-1">{{ days[i].lunch.nutrition.carbs|round|int }}g carbs</span>
+                                            <span class="badge bg-warning text-dark me-1">{{ days[i].lunch.nutrition.fat|round|int }}g fat</span>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3 no-print">
+                                            <a href="{{ days[i].lunch.sourceUrl }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i> View Full Recipe
+                                            </a>
+                                            <a href="{{ url_for('recipe_details', recipe_id=days[i].lunch.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-info-circle me-1"></i> Details
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleRecipeDetails('lunch-{{ i }}')">
+                                                <i class="fas fa-list me-1"></i> Ingredients
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="recipe-details-lunch-{{ i }}" class="mt-3 d-none">
+                                            <h6>Ingredients:</h6>
+                                            <ul class="mb-0">
+                                                {% if days[i].lunch.ingredients %}
+                                                    {% for ingredient in days[i].lunch.ingredients %}
+                                                        <li>{{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <li>View the full recipe for ingredients</li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No lunch recipe available.</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Dinner -->
+                <div class="meal-section">
+                    <h3 class="mb-3"><i class="fas fa-utensils me-2"></i>Dinner</h3>
+                    {% if days[i].dinner %}
+                        <div class="card mb-4">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    {% if days[i].dinner.image %}
+                                        <img src="{{ days[i].dinner.image }}" class="img-fluid recipe-image" alt="{{ days[i].dinner.title }}">
+                                    {% else %}
+                                        <div class="recipe-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h4 class="card-title">{{ days[i].dinner.title }}</h4>
+                                        <div class="d-flex mb-2">
+                                            <div class="me-3">
+                                                <i class="far fa-clock me-1"></i> {{ days[i].dinner.readyInMinutes }} min
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-users me-1"></i> {{ days[i].dinner.servings }} servings
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <span class="badge bg-info me-1">{{ days[i].dinner.nutrition.calories|round|int }} kcal</span>
+                                            <span class="badge bg-primary me-1">{{ days[i].dinner.nutrition.protein|round|int }}g protein</span>
+                                            <span class="badge bg-success me-1">{{ days[i].dinner.nutrition.carbs|round|int }}g carbs</span>
+                                            <span class="badge bg-warning text-dark me-1">{{ days[i].dinner.nutrition.fat|round|int }}g fat</span>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3 no-print">
+                                            <a href="{{ days[i].dinner.sourceUrl }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i> View Full Recipe
+                                            </a>
+                                            <a href="{{ url_for('recipe_details', recipe_id=days[i].dinner.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-info-circle me-1"></i> Details
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleRecipeDetails('dinner-{{ i }}')">
+                                                <i class="fas fa-list me-1"></i> Ingredients
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="recipe-details-dinner-{{ i }}" class="mt-3 d-none">
+                                            <h6>Ingredients:</h6>
+                                            <ul class="mb-0">
+                                                {% if days[i].dinner.ingredients %}
+                                                    {% for ingredient in days[i].dinner.ingredients %}
+                                                        <li>{{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <li>View the full recipe for ingredients</li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No dinner recipe available.</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Snacks -->
+                <div class="meal-section">
+                    <h3 class="mb-3"><i class="fas fa-apple-alt me-2"></i>Snacks</h3>
+                    {% if days[i].snacks %}
+                        <div class="card mb-4">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    {% if days[i].snacks.image %}
+                                        <img src="{{ days[i].snacks.image }}" class="img-fluid recipe-image" alt="{{ days[i].snacks.title }}">
+                                    {% else %}
+                                        <div class="recipe-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h4 class="card-title">{{ days[i].snacks.title }}</h4>
+                                        <div class="d-flex mb-2">
+                                            <div class="me-3">
+                                                <i class="far fa-clock me-1"></i> {{ days[i].snacks.readyInMinutes }} min
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-users me-1"></i> {{ days[i].snacks.servings }} servings
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <span class="badge bg-info me-1">{{ days[i].snacks.nutrition.calories|round|int }} kcal</span>
+                                            <span class="badge bg-primary me-1">{{ days[i].snacks.nutrition.protein|round|int }}g protein</span>
+                                            <span class="badge bg-success me-1">{{ days[i].snacks.nutrition.carbs|round|int }}g carbs</span>
+                                            <span class="badge bg-warning text-dark me-1">{{ days[i].snacks.nutrition.fat|round|int }}g fat</span>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3 no-print">
+                                            <a href="{{ days[i].snacks.sourceUrl }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i> View Full Recipe
+                                            </a>
+                                            <a href="{{ url_for('recipe_details', recipe_id=days[i].snacks.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-info-circle me-1"></i> Details
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleRecipeDetails('snacks-{{ i }}')">
+                                                <i class="fas fa-list me-1"></i> Ingredients
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="recipe-details-snacks-{{ i }}" class="mt-3 d-none">
+                                            <h6>Ingredients:</h6>
+                                            <ul class="mb-0">
+                                                {% if days[i].snacks.ingredients %}
+                                                    {% for ingredient in days[i].snacks.ingredients %}
+                                                        <li>{{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }}</li>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <li>View the full recipe for ingredients</li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No snack recipe available.</div>
+                    {% endif %}
+                </div>
+                
+                <!-- End of day section -->
+                <div class="page-break"></div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
